@@ -1,0 +1,26 @@
+# Rockchip Ubuntu 构建
+
+## 构建拓扑
+
+Ubuntu 仓库的主要开发目录位于 ARM64 构建主机。手动修改代码后，可以
+ARM64 主机完成 rootfs 构建和最小 QA，再提交到 Forgejo。
+
+1. x86 主机编译内核模块、DT overlay 和其他依赖 SDK 的板级二进制；
+2. 将二进制及其校验信息同步到 ARM64 主机上的 Ubuntu 开发目录；
+3. ARM64 主机原生构建 Ubuntu rootfs，避免 x86 QEMU 构建经常崩溃；
+4. 将 rootfs 构建结果同步回 x86 主机，使用仅支持 x86 的 Rockchip 工具合成
+   可烧录镜像。
+
+## 产品矩阵
+
+| 变体 | 桌面 | 发行版 | 架构 |
+| --- | --- | --- | --- |
+| `server` | 无 | Ubuntu | arm64 |
+| `desktop` | GNOME | Ubuntu | arm64 |
+| `desktop-xfce` | XFCE | Ubuntu | arm64 |
+
+Ubuntu rootfs 在非容器化 Debian/Ubuntu 主机上构建，原生 ARM64 为首选。
+在 x86 上，构建产出目录默认是仓库的 `build/`；在 ARM64 上，手动 native 构建
+与 Forgejo CI 必须通过 `BUILD_OUTPUT_DIR` 使用同一个构建产出目录。
+构建主机和 Forgejo 环境搭建见
+[ARM64-BUILD-HOST.md](docs/ARM64-BUILD-HOST.md)。
