@@ -24,3 +24,16 @@ Ubuntu rootfs 在非容器化 Debian/Ubuntu 主机上构建，原生 ARM64 为�
 与 Forgejo CI 必须通过 `BUILD_OUTPUT_DIR` 使用同一个构建产出目录。
 构建主机和 Forgejo 环境搭建见
 [ARM64-BUILD-HOST.md](docs/ARM64-BUILD-HOST.md)。
+
+## Ubuntu Server rootfs
+
+
+```bash
+cp .env.example .env       # 按构建主机修改；不要提交 .env
+./build.sh server --check  # 只检查配置和本机依赖
+./build.sh server          # 构建 rootfs
+```
+
+ARM64 主机默认写入 `/var/lib/ubuntu-ci/build`，x86 主机默认写入仓库内的
+`build/`。两者都可用 `.env` 的 `BUILD_OUTPUT_DIR` 覆盖。详细说明和产物定义见
+[UBUNTU26-SERVER.md](docs/UBUNTU26-SERVER.md)。
