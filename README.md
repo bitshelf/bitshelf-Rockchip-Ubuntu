@@ -94,6 +94,11 @@ dma-buf color fill、同步读回并输出 `RGA_SMOKE_OK`，见 [RGA.md](docs/RG
 MPP runtime 和验收工具随镜像安装。目标板必须完成同一 H.264 bitstream 的 100 帧
 硬件编码和 100 帧硬件解码，见 [MPP.md](docs/MPP.md)。
 
+## V4L2
+
+patched v4l-utils、libv4l-rkmpp 和独立 V4L2 QA 见
+[V4L2.md](docs/V4L2.md)。
+
 ## x86 交叉编译 ARM64
 
 在 x86_64 主机使用 GNU AArch64 交叉工具链。宿主机可以是 Debian 或 Ubuntu，
