@@ -81,6 +81,11 @@ ADB 使用 Ubuntu `adbd` 和通用 USB FunctionFS gadget，保持 root shell 与
 network namespace，使 `adb shell ip -c a` 与串口看到相同接口。移植与双通道 QA
 见 [ADB.md](docs/ADB.md)。
 
+## RGA 2D 加速
+
+RGA runtime 随镜像安装，但开发包只用于构建验收工具。目标板 QA 必须完成真实
+dma-buf color fill、同步读回并输出 `RGA_SMOKE_OK`，见 [RGA.md](docs/RGA.md)。
+
 ## x86 交叉编译 ARM64
 
 在 x86_64 主机使用 GNU AArch64 交叉工具链。宿主机可以是 Debian 或 Ubuntu，
