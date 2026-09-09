@@ -86,6 +86,11 @@ network namespace，使 `adb shell ip -c a` 与串口看到相同接口。移植
 RGA runtime 随镜像安装，但开发包只用于构建验收工具。目标板 QA 必须完成真实
 dma-buf color fill、同步读回并输出 `RGA_SMOKE_OK`，见 [RGA.md](docs/RGA.md)。
 
+## MPP 视频编解码
+
+MPP runtime 和验收工具随镜像安装。目标板必须完成同一 H.264 bitstream 的 100 帧
+硬件编码和 100 帧硬件解码，见 [MPP.md](docs/MPP.md)。
+
 ## x86 交叉编译 ARM64
 
 在 x86_64 主机使用 GNU AArch64 交叉工具链。宿主机可以是 Debian 或 Ubuntu，
