@@ -141,6 +141,12 @@ update.img 与 OTA image 直接使用 SDK 的 `edit-package-file`、
 负载计算 rootfs 容量并插入独立 bootfs；最终封装仍由 SDK `updateimg` 完成。见
 [FACTORY-IMAGE.md](docs/FACTORY-IMAGE.md)。
 
+## Rockchip 镜像测试
+
+SDK `external/rockchip-test/` 可封装为默认不集成的 `rockchip-test`
+deb。Server 与 Desktop 使用独立 QA profile，危险和长时间 vendor 测试不会被自动
+执行。构建与目标板用法见 [ROCKCHIP-TEST.md](docs/ROCKCHIP-TEST.md)。
+
 ## U-Boot extlinux/FDTOVERLAYS
 
 Rockchip U-Boot 2017.09 的 extlinux 启动接入、FDT overlay 回移、RKIMG 回退和
