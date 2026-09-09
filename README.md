@@ -1,5 +1,8 @@
 # Rockchip Ubuntu 构建
 
+默认启用首次启动建号，不预置账户和密码。配置与客户量产回滚见
+[UBUNTU-FIRSTBOOT.md](docs/UBUNTU-FIRSTBOOT.md)。
+
 ## 构建拓扑
 
 Ubuntu 仓库的主要开发目录位于 ARM64 构建主机。手动修改代码后，可以
