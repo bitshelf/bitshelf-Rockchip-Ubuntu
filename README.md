@@ -120,6 +120,11 @@ GStreamer 主体使用 Ubuntu 26 软件源，SDK 仅提供 Rockchip MPP 插件�
 100 帧 NV12 完成硬件编码、H.264 解析和硬件解码，见
 [GSTREAMER.md](docs/GSTREAMER.md)。
 
+## ALSA 命令行工具
+
+Server 默认安装 `alsa-utils`；非破坏性的声卡、PCM 和 mixer CLI 验收见
+[ALSA-UTILS.md](docs/ALSA-UTILS.md)。
+
 ## x86 交叉编译 ARM64
 
 在 x86_64 主机使用 GNU AArch64 交叉工具链。宿主机可以是 Debian 或 Ubuntu，
