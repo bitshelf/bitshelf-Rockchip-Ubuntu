@@ -8,7 +8,7 @@ trap 'rm -rf -- "$tmp_dir"' EXIT
 
 fail() { echo "FAIL: $*" >&2; exit 1; }
 
-for spec in 'libdrm:libdrm:deb'; do
+for spec in 'libdrm:libdrm:deb' 'wayland:wayland:deb'; do
     IFS=: read -r example source format <<<"$spec"
     output="$(CROSS_BASE_TAG=future-release \
         CROSS_OUTPUT_DIR="${tmp_dir}/output" \
@@ -21,7 +21,7 @@ for spec in 'libdrm:libdrm:deb'; do
         fail "wrong package format: $example"
 done
 
-for document in CROSS-LIBDRM.md; do
+for document in CROSS-LIBDRM.md CROSS-WAYLAND.md; do
     [[ -s "${PROJECT_DIR}/docs/${document}" ]] || fail "missing example document: $document"
 done
 grep -Fq 'dpkg-buildpackage --host-arch arm64' \

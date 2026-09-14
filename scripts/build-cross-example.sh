@@ -8,9 +8,9 @@ ACTION=build
 
 usage() {
     cat <<'EOF'
-usage: scripts/build-cross-example.sh [--print-plan] <libdrm>
+usage: scripts/build-cross-example.sh [--print-plan] <libdrm|wayland>
 
-Build patched libdrm ARM64 Debian packages.
+Build libdrm or Wayland ARM64 Debian packages.
 EOF
 }
 
@@ -25,6 +25,7 @@ example="${1:-}"
 (( $# == 1 )) || { usage >&2; exit 2; }
 case "$example" in
     libdrm) source_package=libdrm; package_format=deb ;;
+    wayland) source_package=wayland; package_format=deb ;;
     *) usage >&2; exit 2 ;;
 esac
 
