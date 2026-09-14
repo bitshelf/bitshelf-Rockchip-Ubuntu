@@ -1,0 +1,37 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: RK3576 Ubuntu Builder <builder@localhost>
+Date: Tue, 26 Aug 2026 00:00:00 +0800
+Subject: [PATCH 17/17] HACK: wtf: Make CodePointIterator complete for GCC 15
+ libstdc++
+
+GCC 15's std::begin() noexcept specification eagerly evaluates
+noexcept(__cont.begin()) during overload resolution (perfetto's
+traced_value.h probes iterability of WTF::String with std::begin).  The
+call then requires the return type to be complete, but WTF::String only
+forward-declares CodePointIterator at that point, producing:
+
+  bits/range_access.h:66:62: error: calling 'begin' with incomplete
+  return type 'CodePointIterator'
+
+Include the full CodePointIterator definition so the return type is
+complete when String::begin()/end() are declared.
+---
+ third_party/blink/renderer/platform/wtf/text/wtf_string.h | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/third_party/blink/renderer/platform/wtf/text/wtf_string.h b/third_party/blink/renderer/platform/wtf/text/wtf_string.h
+--- a/third_party/blink/renderer/platform/wtf/text/wtf_string.h
++++ b/third_party/blink/renderer/platform/wtf/text/wtf_string.h
+@@ -40,8 +40,9 @@
+ #include "third_party/blink/renderer/platform/wtf/wtf_size_t.h"
+ #include "third_party/perfetto/include/perfetto/tracing/traced_value_forward.h"
++#include "third_party/blink/renderer/platform/wtf/text/code_point_iterator.h"
+ 
+ namespace WTF {
+ 
+-class CodePointIterator;
++// CodePointIterator is defined by code_point_iterator.h above.
+ 
+ #define DISPATCH_CASE_OP(caseSensitivity, op, args)     \
+-- 
+2.39.2

@@ -1,0 +1,45 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: RK3576 Ubuntu Builder <builder@localhost>
+Date: Tue, 26 Aug 2026 00:00:00 +0800
+Subject: [PATCH 23/23] HACK: ozone: wayland: pass EGL_PLATFORM_WAYLAND_EXT to
+ the Mali DDK
+
+GLOzoneEGLWayland::GetNativeDisplay() returns the wl_display pointer
+without a platform enum, so gl_display.cc's DEFAULT case falls back to
+eglGetDisplay(display). The RK3576 Mali DDK (g24p0) does not handle a
+wayland pointer passed to eglGetDisplay: eglInitialize then fails with
+EGL_NOT_INITIALIZED ("eglInitialize Default failed") and the GPU process
+dies in gpu_init. The DDK only accepts the explicit platform call
+eglGetPlatformDisplay(EGL_PLATFORM_WAYLAND_EXT, wl_display, nullptr).
+Mutter/GNOME Shell use exactly that path, which is why the desktop
+session renders while chromium cannot initialize GL.
+
+GetDisplayFromType() already routes DEFAULT through
+eglGetPlatformDisplay(native_display.GetPlatform(), display, nullptr)
+when a platform is set; carry EGL_PLATFORM_WAYLAND_EXT in the
+EGLDisplayPlatform to reach that path.
+
+---
+ ui/ozone/platform/wayland/gpu/wayland_surface_factory.cc | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/ui/ozone/platform/wayland/gpu/wayland_surface_factory.cc b/ui/ozone/platform/wayland/gpu/wayland_surface_factory.cc
+index 1ba50a5aa..2dfe19e37 100644
+--- a/ui/ozone/platform/wayland/gpu/wayland_surface_factory.cc
++++ b/ui/ozone/platform/wayland/gpu/wayland_surface_factory.cc
+@@ -173,8 +173,12 @@ scoped_refptr<gl::GLSurface> GLOzoneEGLWayland::CreateOffscreenGLSurface(
+ 
+ gl::EGLDisplayPlatform GLOzoneEGLWayland::GetNativeDisplay() {
++#ifndef EGL_PLATFORM_WAYLAND_EXT
++#define EGL_PLATFORM_WAYLAND_EXT 0x31D8
++#endif
+   if (connection_) {
+     return gl::EGLDisplayPlatform(
+-        reinterpret_cast<EGLNativeDisplayType>(connection_->display()));
++        reinterpret_cast<EGLNativeDisplayType>(connection_->display()),
++        EGL_PLATFORM_WAYLAND_EXT);
+   }
+   return gl::EGLDisplayPlatform(EGL_DEFAULT_DISPLAY);
+ }
+-- 
+2.34.1

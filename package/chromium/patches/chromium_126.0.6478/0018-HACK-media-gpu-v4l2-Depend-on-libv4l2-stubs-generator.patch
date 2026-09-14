@@ -1,0 +1,36 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: RK3576 Ubuntu Builder <builder@localhost>
+Date: Tue, 26 Aug 2026 00:00:00 +0800
+Subject: [PATCH 18/18] HACK: media: gpu: v4l2: depend on the libv4l2 stubs
+ generator
+
+The Rockchip 0003 patch adds the generate_stubs("libv4l2_stubs") target,
+and 0004 makes v4l2_device.cc / v4l2_utils.cc include the generated
+v4l2_stubs.h, but the v4l2 source_set itself never depends on the stubs
+target: only media/capture links it, and only when use_v4lplugin=true
+(media/gpu/args.gni defaults it to false).  A Debian-style build without
+that flag therefore compiles the v4l2 sources before v4l2_stubs.h exists:
+
+  media/gpu/v4l2/v4l2_device.cc:39:10: fatal error:
+  'media/gpu/v4l2/v4l2_stubs.h' file not found
+
+Wire the dependency where the header is consumed.
+---
+ media/gpu/v4l2/BUILD.gn | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/media/gpu/v4l2/BUILD.gn b/media/gpu/v4l2/BUILD.gn
+--- a/media/gpu/v4l2/BUILD.gn
++++ b/media/gpu/v4l2/BUILD.gn
+@@ -131,8 +131,9 @@ source_set("v4l2") {
+   deps = [
+     ":v4l2_status",
++    ":libv4l2_stubs",
+     "//base",
+     "//build/config/linux/libdrm",
+     "//gpu/command_buffer/service:gles2",
+     "//gpu/ipc/common",
+     "//gpu/ipc/service",
+     "//media",
+-- 
+2.39.2

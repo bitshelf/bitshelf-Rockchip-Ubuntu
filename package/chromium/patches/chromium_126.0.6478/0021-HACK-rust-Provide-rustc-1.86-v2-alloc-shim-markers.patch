@@ -1,0 +1,76 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: RK3576 Ubuntu Builder <builder@localhost>
+Date: Tue, 26 Aug 2026 00:00:00 +0800
+Subject: [PATCH 21/21] HACK: rust: expose the alloc shims under the rustc
+ 1.86+ v0-mangled names
+
+rustc 1.86 moved the whole allocator-shim interface (__rust_alloc,
+__rust_dealloc, __rust_realloc, __rust_alloc_zeroed,
+__rust_alloc_error_handler and the two marker variables) into its
+internal `__rustc` crate, so liballoc in the Ubuntu 26 (rustc 1.93.1)
+prebuilt stdlib references them by v0-mangled names instead of the
+plain C names.  C++-driven links of the stdlib (e.g.
+chrome_crashpad_handler through the cxx crate) do not get the
+compiler-injected definitions and fail with:
+
+  ld.lld-18: error: undefined symbol: __rustc::__rust_alloc
+  ld.lld-18: error: undefined symbol: __rustc::__rust_no_alloc_shim_is_unstable_v2
+
+Provide weak aliases under the v0-mangled names for every shim, keeping
+the legacy C names for older toolchains (the Noble builder's rustc).
+The `__rustc` crate disambiguator (`sdfThw5geRvg`) is rustc-version
+specific and must match the installed toolchain.
+---
+ build/rust/std/remap_alloc.cc | 37 +++++++++++++++++++++++++++++++++
+ 1 file changed, 37 insertions(+)
+
+diff --git a/build/rust/std/remap_alloc.cc b/build/rust/std/remap_alloc.cc
+--- a/build/rust/std/remap_alloc.cc
++++ b/build/rust/std/remap_alloc.cc
+@@ -175,4 +175,44 @@
+ REMAP_ALLOC_ATTRIBUTES extern const unsigned char
+     __rust_alloc_error_handler_should_panic = 0;
+ 
++// rustc 1.86+ (Ubuntu 26.04 ships rustc 1.93.1) moved the whole
++// allocator-shim interface into its internal `__rustc` crate, so
++// liballoc references the functions and markers below by their versioned
++// v0-mangled names instead of the plain C names.  When rustc drives the
++// link it injects the definitions itself; for C++-driven links of the
++// prebuilt stdlib we must provide them.  The `__rustc` crate
++// disambiguator is rustc-version specific and must match the installed
++// toolchain.
++//
++// All aliases are weak: if a rustc-driven link also pulls in this
++// object, the compiler's own strong definitions win.
++extern "C" __attribute__((weak, alias("__rust_alloc"))) void*
++    rust_alloc_v0(void* ptr, size_t size)
++        __asm__("_RNvCsdfThw5geRvg_7___rustc12___rust_alloc");
++
++extern "C" __attribute__((weak, alias("__rust_dealloc"))) void
++    rust_dealloc_v0(void* ptr, size_t size)
++        __asm__("_RNvCsdfThw5geRvg_7___rustc14___rust_dealloc");
++
++extern "C" __attribute__((weak, alias("__rust_realloc"))) void*
++    rust_realloc_v0(void* ptr, size_t size, size_t new_size, size_t align)
++        __asm__("_RNvCsdfThw5geRvg_7___rustc14___rust_realloc");
++
++extern "C" __attribute__((weak, alias("__rust_alloc_zeroed"))) void*
++    rust_alloc_zeroed_v0(size_t size, size_t align)
++        __asm__("_RNvCsdfThw5geRvg_7___rustc19___rust_alloc_zeroed");
++
++extern "C" __attribute__((weak, alias("__rust_alloc_error_handler"))) void
++    rust_alloc_error_handler_v0(size_t size, size_t align)
++        __asm__("_RNvCsdfThw5geRvg_7___rustc26___rust_alloc_error_handler");
++
++__attribute__((weak)) unsigned char kRustNoAllocShimIsUnstableV2
++    __asm__("_RNvCsdfThw5geRvg_7___rustc"
++            "35___rust_no_alloc_shim_is_unstable_v2");
++
++extern __attribute__((weak)) const unsigned char
++    kRustAllocErrorHandlerShouldPanicV2
++        __asm__("_RNvCsdfThw5geRvg_7___rustc"
++                "42___rust_alloc_error_handler_should_panic_v2") = 0;
++
+ }  // extern "C"
+-- 
+2.39.2

@@ -1,0 +1,76 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: RK3576 Ubuntu Builder <builder@localhost>
+Date: Tue, 26 Aug 2026 00:00:00 +0800
+Subject: [PATCH 22/22] HACK: printing: order imported mojom generation
+ before print_backend_service
+
+print_backend_service.mojom imports printing/backend/mojom/print_backend.mojom
+and printing/mojom/printing_context.mojom, and its generated headers
+(-shared-internal.h and the full .h) #include theirs.  The mojom
+template only propagates imported mojom dependencies to the parser and
+to the C++ source-set targets, not to the generator actions, so nothing
+guarantees those generators ran before print_backend_service's headers
+are consumed by a TU that only depends on the generated headers (e.g.
+page_handler.cc).  With parallel builds this fails as:
+
+  gen/chrome/services/printing/public/mojom/print_backend_service.mojom-shared-internal.h:16:10:
+  fatal error: 'printing/backend/mojom/print_backend.mojom-shared-internal.h'
+  file not found
+
+Wire the imported generators into the parser deps (the template forwards
+parser_deps to every generator action) through visibility-free groups,
+forcing the imported headers to exist before this mojom's own headers.
+---
+ chrome/services/printing/public/mojom/BUILD.gn | 4 ++++
+ printing/backend/mojom/BUILD.gn                | 10 ++++++++++
+ printing/mojom/BUILD.gn                        | 9 +++++++++
+ 3 files changed, 23 insertions(+)
+
+diff --git a/chrome/services/printing/public/mojom/BUILD.gn b/chrome/services/printing/public/mojom/BUILD.gn
+--- a/chrome/services/printing/public/mojom/BUILD.gn
++++ b/chrome/services/printing/public/mojom/BUILD.gn
+@@ -39,5 +39,9 @@
+   if (enable_oop_printing) {
+     sources += [ "print_backend_service.mojom" ]
++    parser_deps = [
++      "//printing/backend/mojom:mojom_shared_generator",
++      "//printing/mojom:mojom_shared_generator",
++    ]
+     public_deps += [
+       "//printing/backend/mojom",
+       "//printing/mojom:printing_context",
+diff --git a/printing/backend/mojom/BUILD.gn b/printing/backend/mojom/BUILD.gn
+--- a/printing/backend/mojom/BUILD.gn
++++ b/printing/backend/mojom/BUILD.gn
+@@ -74,2 +74,12 @@
+   }
+ }
++
++# The mojom template's generator actions are only visible inside this
++# directory; this group lets dependents in other directories order the
++# generation (see chrome/services/printing/public/mojom/BUILD.gn).
++group("mojom_shared_generator") {
++  public_deps = [
++    ":mojom__generator",
++    ":mojom_shared__generator",
++  ]
++}
+diff --git a/printing/mojom/BUILD.gn b/printing/mojom/BUILD.gn
+--- a/printing/mojom/BUILD.gn
++++ b/printing/mojom/BUILD.gn
+@@ -74,4 +74,13 @@
+       },
+     ]
+   }
+ }
++
++group("mojom_shared_generator") {
++  public_deps = [
++    ":mojom__generator",
++    ":mojom_shared__generator",
++    ":printing_context__generator",
++    ":printing_context_shared__generator",
++  ]
++}
+-- 
+2.39.2
